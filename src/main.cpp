@@ -1,89 +1,132 @@
 
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EditorUI.hpp>
+#include <Geode/modify/LevelEditorLayer.hpp>
 
 using namespace geode::prelude;
 
 class $modify(MultiLevelEditorUI, EditorUI) {
-    struct Fields {
-        CCMenu* m_tabsMenu = nullptr;
-        int m_tabCount = 1;
-        int m_activeTab = 0;
-    };
-
-    bool init(LevelEditorLayer* level) {
-        if (!EditorUI::init(level)) {
+    bool init(LevelEditorLayer* layer) {
+        if (!EditorUI::init(layer))
             return false;
-        }
 
-        auto size = CCDirector::sharedDirector()->getWinSize();
-
-        m_fields->m_tabsMenu = CCMenu::create();
-        m_fields->m_tabsMenu->setPosition(
-            ccp(size.width / 2, size.height - 24)
+        auto label = CCLabelBMFont::create("+", "bigFont.fnt");
+        auto button = CCMenuItemLabel::create(
+            label,
+            this,
+            menu_selector(MultiLevelEditorUI::onAddTab)
         );
-        this->addChild(m_fields->m_tabsMenu, 999);
 
-        rebuildTabs();
+        auto menu = CCMenu::create();
+        menu->addChild(button);
+        menu->setPosition(
+            CCDirector::sharedDirector()->getWinSize().width / 2,
+            CCDirector::sharedDirector()->getWinSize().height - 25
+        );
+
+        this->addChild(menu, 999);
+
         return true;
     }
 
-    void rebuildTabs() {
-        auto menu = m_fields->m_tabsMenu;
-        if (!menu) return;
+    void onAddTab(CCObject*) {
+        auto levels = LocalLevelManager::sharedState()->m_localLevels;
 
-        menu->removeAllChildrenWithCleanup(true);
+        if (!levels || levels->count() == 0) {
+            FLAlertLayer::create(
+                "Multi-Level Editor",
+                "No saved levels found.",
+                "OK"
+            )->show();
+            return;
+        }
 
-        constexpr float spacing = 76.f;
-        float firstX = -((m_fields->m_tabCount - 1) * spacing) / 2.f;
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-        for (int i = 0; i < m_fields->m_tabCount; i++) {
-            std::string text = i == m_fields->m_activeTab
-                ? "[" + std::to_string(i + 1) + "]"
-                : std::to_string(i + 1);
+        auto panel = CCNode::create();
+        panel->setID("level-list-panel");
+        panel->setPosition(0, 0);
 
-            auto label = CCLabelBMFont::create(
-                text.c_str(), "bigFont.fnt"
+        auto menu = CCMenu::create();
+        menu->setPosition(winSize.width / 2, winSize.height / 2);
+
+        for (unsigned int i = 0; i < levels->count(); i++) {
+            auto level = static_cast<GJGameLevel*>(levels->objectAtIndex(i));
+
+            auto text = CCLabelBMFont::create(
+                level->m_levelName.c_str(),
+                "bigFont.fnt"
             );
-            if (!label) continue;
+
+            text->setScale(0.35f);
 
             auto item = CCMenuItemLabel::create(
-                label,
+                text,
                 this,
-                menu_selector(MultiLevelEditorUI::onTabPressed)
+                menu_selector(MultiLevelEditorUI::onSelectLevel)
             );
 
             item->setTag(i);
-            item->setScale(0.45f);
-            item->setPosition(ccp(firstX + i * spacing, 0));
             menu->addChild(item);
+            item->setPosition(
+                0,
+                120 - static_cast<float>(i) * 35
+            );
         }
 
-        auto plusLabel = CCLabelBMFont::create("+", "bigFont.fnt");
-        if (plusLabel) {
-            auto plus = CCMenuItemLabel::create(
-                plusLabel,
-                this,
-                menu_selector(MultiLevelEditorUI::onAddTab)
-            );
+        auto closeLabel = CCLabelBMFont::create("CLOSE", "bigFont.fnt");
+        auto closeButton = CCMenuItemLabel::create(
+            closeLabel,
+            this,
+            menu_selector(MultiLevelEditorUI::onCloseList)
+        );
 
-            plus->setScale(0.55f);
-            plus->setPosition(
-                ccp(firstX + m_fields->m_tabCount * spacing, 0)
+        closeButton->setPosition(0, -150);
+        menu->addChild(closeButton);
+
+        panel->addChild(menu);
+        this->addChild(panel, 1000);
+    }
+
+    void onSelectLevel(CCObject* sender) {
+        auto levels = LocalLevelManager::sharedState()->m_localLevels;
+        auto index = sender->getTag();
+
+        if (!levels || index < 0 || index >= levels->count())
+            return;
+
+        auto source = static_cast<GJGameLevel*>(
+            levels->objectAtIndex(index)
+        );
+
+        auto copy = GJGameLevel::create();
+
+        if (!copy)
+            return;
+
+        copy->m_levelName = source->m_levelName + " (Tab)";
+        copy->m_levelString = source->m_levelString;
+        copy->m_audioTrack = source->m_audioTrack;
+        copy->m_songID = source->m_songID;
+        copy->m_levelLength = source->m_levelLength;
+        copy->m_twoPlayerMode = source->m_twoPlayerMode;
+        copy->m_lastBuildTab = source->m_lastBuildTab;
+        copy->m_lastBuildPage = source->m_lastBuildPage;
+        copy->m_lastCameraPos = source->m_lastCameraPos;
+
+        auto scene = LevelEditorLayer::scene(copy, false);
+
+        if (scene) {
+            CCDirector::sharedDirector()->replaceScene(
+                CCTransitionFade::create(0.3f, scene)
             );
-            menu->addChild(plus);
         }
     }
 
-    void onTabPressed(CCObject* sender) {
-        auto item = static_cast<CCNode*>(sender);
-        m_fields->m_activeTab = item->getTag();
-        rebuildTabs();
-    }
+    void onCloseList(CCObject*) {
+        auto panel = this->getChildByID("level-list-panel");
 
-    void onAddTab(CCObject*) {
-        m_fields->m_tabCount++;
-        m_fields->m_activeTab = m_fields->m_tabCount - 1;
-        rebuildTabs();
+        if (panel)
+            panel->removeFromParent();
     }
 };
