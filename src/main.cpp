@@ -1,7 +1,7 @@
 
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EditorUI.hpp>
-#include <EditorTabAPI.hpp>
+#include <alphalaneous.editortab_api/include/EditorTabAPI.hpp>
 
 using namespace geode::prelude;
 
@@ -11,7 +11,7 @@ class $modify(MultiLevelEditorUI, EditorUI) {
             return false;
 
         alpha::editor_tabs::addTab(
-            "93exe.multilevel-editor/multi-level",
+            "93exe.multilevel-editor/multi-level"_spr,
             alpha::editor_tabs::BUILD,
 
             // Содержимое вкладки
@@ -35,16 +35,17 @@ class $modify(MultiLevelEditorUI, EditorUI) {
                     "bigFont.fnt"
                 );
 
-                if (icon)
-                    icon->setScale(0.5f);
+                if (!icon)
+                    return CCNode::create();
 
-                return icon ? icon : CCNode::create();
+                icon->setScale(0.5f);
+                return icon;
             },
 
-            // Срабатывает при открытии и закрытии вкладки
+            // Открытие и закрытие вкладки
             [](bool state, CCNode*) {
                 log::info(
-                    "Multi-Level tab state: {}",
+                    "Multi-Level tab: {}",
                     state ? "opened" : "closed"
                 );
             }
