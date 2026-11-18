@@ -1,9 +1,55 @@
 
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EditorUI.hpp>
+#include <Geode/modify/LevelEditorLayer.hpp>
 
 using namespace geode::prelude;
 
+static GJGameLevel* cloneLevel(GJGameLevel* source) {
+    if (!source)
+        return nullptr;
+
+    auto copy = GJGameLevel::create();
+    if (!copy)
+        return nullptr;
+
+    copy->m_levelName = source->m_levelName;
+    copy->m_levelDesc = source->m_levelDesc;
+    copy->m_levelString = source->m_levelString;
+
+    copy->m_audioTrack = source->m_audioTrack;
+    copy->m_songID = source->m_songID;
+    copy->m_levelLength = source->m_levelLength;
+    copy->m_twoPlayerMode = source->m_twoPlayerMode;
+
+    copy->m_lastCameraPos = source->m_lastCameraPos;
+    copy->m_lastEditorZoom = source->m_lastEditorZoom;
+    copy->m_lastBuildTab = source->m_lastBuildTab;
+    copy->m_lastBuildPage = source->m_lastBuildPage;
+    copy->m_lastBuildGroupID = source->m_lastBuildGroupID;
+
+    copy->m_lockedEditorLayers = source->m_lockedEditorLayers;
+    copy->m_savedCameraPositions = source->m_savedCameraPositions;
+
+    copy->m_isEditable = true;
+    copy->m_localOrSaved = true;
+
+    return copy;
+}
+
+// Создаём рабочую копию при открытии редактора.
+class $modify(MultiLevelEditorLayer, LevelEditorLayer) {
+    bool init(GJGameLevel* level, bool noUI) {
+        auto copy = cloneLevel(level);
+
+        if (!copy)
+            return false;
+
+        return LevelEditorLayer::init(copy, noUI);
+    }
+};
+
+// Кнопка добавления уровня.
 class $modify(MultiLevelEditorUI, EditorUI) {
     bool init(LevelEditorLayer* layer) {
         if (!EditorUI::init(layer))
@@ -107,23 +153,10 @@ class $modify(MultiLevelEditorUI, EditorUI) {
             levels->objectAtIndex(index)
         );
 
-        if (!source)
-            return;
-
-        auto copy = GJGameLevel::create();
+        auto copy = cloneLevel(source);
 
         if (!copy)
             return;
-
-        copy->m_levelName = source->m_levelName;
-        copy->m_levelString = source->m_levelString;
-        copy->m_audioTrack = source->m_audioTrack;
-        copy->m_songID = source->m_songID;
-        copy->m_levelLength = source->m_levelLength;
-        copy->m_twoPlayerMode = source->m_twoPlayerMode;
-        copy->m_lastBuildTab = source->m_lastBuildTab;
-        copy->m_lastBuildPage = source->m_lastBuildPage;
-        copy->m_lastCameraPos = source->m_lastCameraPos;
 
         auto scene = LevelEditorLayer::scene(copy, false);
 
