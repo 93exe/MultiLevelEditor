@@ -6,10 +6,7 @@
     },
     "id": "93exe.multilevel-editor",
     "name": "Multi-Level Editor",
-    "version": "v1.1.0",
+    "version": "v1.1.1",
     "developer": "93exe",
-    "description": "Multiple editor tabs for Geometry Dash.",
-    "dependencies": {
-        "alphalaneous.editortab_api": "=v2.1.13"
-    }
+    "description": "Multi-Level Editor diagnostic build."
 }
