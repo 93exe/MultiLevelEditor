@@ -10,6 +10,7 @@ class $modify(MultiLevelEditorUI, EditorUI) {
             return false;
 
         auto label = CCLabelBMFont::create("+", "bigFont.fnt");
+
         auto button = CCMenuItemLabel::create(
             label,
             this,
@@ -115,8 +116,6 @@ class $modify(MultiLevelEditorUI, EditorUI) {
             return;
 
         copy->m_levelName = source->m_levelName;
-        copy->m_levelName += " (Tab)";
-
         copy->m_levelString = source->m_levelString;
         copy->m_audioTrack = source->m_audioTrack;
         copy->m_songID = source->m_songID;
