@@ -10,6 +10,6 @@
     "developer": "93exe",
     "description": "Multiple editor tabs for Geometry Dash.",
     "dependencies": {
-        "alphalaneous.editortab_api": ">=2.1.13"
+        "alphalaneous.editortab_api": "=v2.1.13"
     }
 }
