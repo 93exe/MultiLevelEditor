@@ -1,7 +1,6 @@
 
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EditorUI.hpp>
-#include <Geode/modify/LevelEditorLayer.hpp>
 
 using namespace geode::prelude;
 
@@ -19,10 +18,9 @@ class $modify(MultiLevelEditorUI, EditorUI) {
 
         auto menu = CCMenu::create();
         menu->addChild(button);
-        menu->setPosition(
-            CCDirector::sharedDirector()->getWinSize().width / 2,
-            CCDirector::sharedDirector()->getWinSize().height - 25
-        );
+
+        auto size = CCDirector::sharedDirector()->getWinSize();
+        menu->setPosition(size.width / 2, size.height - 25);
 
         this->addChild(menu, 999);
 
@@ -45,13 +43,17 @@ class $modify(MultiLevelEditorUI, EditorUI) {
 
         auto panel = CCNode::create();
         panel->setID("level-list-panel");
-        panel->setPosition(0, 0);
 
         auto menu = CCMenu::create();
         menu->setPosition(winSize.width / 2, winSize.height / 2);
 
         for (unsigned int i = 0; i < levels->count(); i++) {
-            auto level = static_cast<GJGameLevel*>(levels->objectAtIndex(i));
+            auto level = static_cast<GJGameLevel*>(
+                levels->objectAtIndex(i)
+            );
+
+            if (!level)
+                continue;
 
             auto text = CCLabelBMFont::create(
                 level->m_levelName.c_str(),
@@ -68,13 +70,18 @@ class $modify(MultiLevelEditorUI, EditorUI) {
 
             item->setTag(i);
             menu->addChild(item);
+
             item->setPosition(
                 0,
                 120 - static_cast<float>(i) * 35
             );
         }
 
-        auto closeLabel = CCLabelBMFont::create("CLOSE", "bigFont.fnt");
+        auto closeLabel = CCLabelBMFont::create(
+            "CLOSE",
+            "bigFont.fnt"
+        );
+
         auto closeButton = CCMenuItemLabel::create(
             closeLabel,
             this,
@@ -99,12 +106,17 @@ class $modify(MultiLevelEditorUI, EditorUI) {
             levels->objectAtIndex(index)
         );
 
+        if (!source)
+            return;
+
         auto copy = GJGameLevel::create();
 
         if (!copy)
             return;
 
-        copy->m_levelName = source->m_levelName + " (Tab)";
+        copy->m_levelName = source->m_levelName;
+        copy->m_levelName += " (Tab)";
+
         copy->m_levelString = source->m_levelString;
         copy->m_audioTrack = source->m_audioTrack;
         copy->m_songID = source->m_songID;
